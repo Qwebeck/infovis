@@ -46,7 +46,7 @@ bower_components
 # TypeScript
 *.tsbuildinfo
 
-2018-openfoodfacts/
+2018-openfoodfacts_real/
 .cache/
 .parcel-cache/
 node_modules/

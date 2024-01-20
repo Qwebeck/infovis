@@ -1,10 +1,8 @@
 import * as d3 from 'd3';
-import { width, margin, height } from './barchart_sizes';
 import { updateGlobalSummary } from './piechart'
-
-// d3.tsv('/2018-openfoodfacts/tsv/categories_taxonomy.tsv').then((d: any[]) => {
-//     console.log(d)
-// })
+import _, { Collection } from 'lodash';
+import { Product, ProductCategory, ProductCountry } from './dataset_interfaces'
+import { updateHistogram } from './histogram';
 
 
 (window as any).update = function update(category: 'product_category' | 'country') {
@@ -15,10 +13,7 @@ import { updateGlobalSummary } from './piechart'
     if (category === 'country') {
         loadCountryData()
     }
-    updateGlobalSummary();
 }
-
-
 
 const cleanScreen = () => {
     d3.selectAll("svg").remove();
@@ -26,88 +21,51 @@ const cleanScreen = () => {
 
 
 const loadCountryData = () => {
-    d3.csv("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/7_OneCatOneNum_header.csv").then((data:
-        any[]) => {
-        const svg = d3.select("#bar_chart")
-            .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
-
-        // Add X axis
-        const x = d3.scaleLinear()
-            .domain([0, 13000])
-            .range([0, width]);
-        svg.append("g")
-            .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x))
-            .selectAll("text")
-            .attr("transform", "translate(-10,0)rotate(-45)")
-            .style("text-anchor", "end");
-
-        // Y axis
-        const y = d3.scaleBand()
-            .range([0, height])
-            .domain(data.map((d: any) => d.Country))
-            .padding(.1);
-        svg.append("g")
-            .call(d3.axisLeft(y));
-
-        //Bars
-        svg.selectAll("myRect")
-            .data(data)
-            .enter()
-            .append("rect")
-            .attr("x", x(0))
-            .attr("y", (d: any) => y(d.Country))
-            .attr("width", (d: any) => x(d.Value))
-            .attr("height", y.bandwidth())
-            .attr("fill", "#69b3a2");
-    });
-
+    Promise.all([
+        d3.tsv('/2018-openfoodfacts_mock/products_countries.tsv'),
+        d3.tsv('/2018-openfoodfacts_mock/products.tsv')
+    ]).then(([countries, products]) => {
+        // hack
+        const [typedCountries, typedProducts] = [countries as unknown as ProductCountry[], products as unknown as Product[]];
+        const result = _(typedProducts)
+            .keyBy('code')
+            .merge(_.keyBy(typedCountries, 'code'))
+            .filter(item => !!item.country)
+            .countBy('country')
+            .toPairs()
+            .orderBy(pair => pair[1], 'desc')
+            .take(10)
+            .map(([country, count]) => ({ 'key': country, 'count': count }))
+            .value()
+            ;
+        updateHistogram(result);
+        updateGlobalSummary(result);
+    })
 }
 
 const loadProductCategoryData = () => {
 
-    d3.csv("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/7_OneCatOneNum_header.csv").then((data: any[]) => {
-
-        const svg = d3.select("#bar_chart")
-            .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
-
-
-        // Add X axis
-        const x = d3.scaleLinear()
-            .domain([0, 13000])
-            .range([0, width]);
-        svg.append("g")
-            .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x))
-            .selectAll("text")
-            .attr("transform", "translate(-10,0)rotate(-45)")
-            .style("text-anchor", "end");
-
-        // Y axis
-        const y = d3.scaleBand()
-            .range([0, height])
-            .domain(data.map((d: any) => d.Country))
-            .padding(.1);
-        svg.append("g")
-            .call(d3.axisLeft(y));
-
-        //Bars
-        svg.selectAll("myRect")
-            .data(data)
-            .enter()
-            .append("rect")
-            .attr("x", x(0))
-            .attr("y", (d: any) => y(d.Country))
-            .attr("width", (d: any) => x(d.Value))
-            .attr("height", y.bandwidth())
-            .attr("fill", "#111111");
-    });
+    Promise.all([
+        d3.tsv('/2018-openfoodfacts_mock/products_categories_full.tsv'),
+        d3.tsv('/2018-openfoodfacts_mock/products.tsv')
+    ]).then(([categories, products]) => {
+        // hack
+        const [typedCategories, typedProducts] = [categories as unknown as ProductCategory[], products as unknown as Product[]];
+        const result = _(typedProducts)
+            .keyBy('code')
+            .merge(_.keyBy(typedCategories, 'code'))
+            .filter(item => !!item.category)
+            .countBy('category')
+            .toPairs()
+            .orderBy(pair => pair[1], 'desc')
+            .take(10)
+            .map(([catName, count]) => ({ 'key': catName, 'count': count }))
+            .value()
+            ;
+        updateHistogram(result);
+        updateGlobalSummary(result);
+    })
 }
+
+
+

@@ -11,6 +11,7 @@ body {
     --chart-margin-left: 90px;
     --chart-width: 800px;
     --chart-height: 400px;
+    --chart-color: #8a2b5b;
 }
 
 #bar_chart {
@@ -33,15 +34,38 @@ body {
     margin-bottom: 20px;
 }
 
+
+body {
+    font-family: 'Roboto', sans-serif;
+    color: #454545;
+    /* dark gray for better contrast */
+    background-color: #f3f3f3;
+    /* light gray for better contrast */
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+h1,
+h2,
+h3 {
+    color: #2b8a3e;
+    /* green that is distinguishable for color-blind users */
+}
+
 .button-container button {
-    padding: 5px 10px;
     border: 1px solid #ccc;
-    background-color: #cac7c7;
+    background-color: var(--chart-color);
+    /* purple that is distinguishable for color-blind users */
     width: 40%;
+    padding: 5px 10px;
+
 }
 
 .button-container button:hover {
-    background-color: #a7a7a7;
+    background-color: #5b2b8a;
+    /* different shade of purple for hover effect */
 }
 
 .button-container button:first-child {
@@ -50,4 +74,12 @@ body {
 
 .button-container button:last-child {
     border-radius: 0 5px 5px 0;
+}
+
+#tooltip {
+    background-color: #2b8a3e;
+    /* same green as headers */
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
 }

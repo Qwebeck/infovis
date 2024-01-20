@@ -11,6 +11,7 @@ export const margin = {
 };
 export const width = parseInt(style.getPropertyValue('--chart-width')) - margin.left - margin.right;
 export const height = parseInt(style.getPropertyValue('--chart-height')) - margin.top - margin.bottom;
+export const color = style.getPropertyValue('--chart-color');
 
 
 
