@@ -1,0 +1,22 @@
+{
+    "version": "1.0.0",
+    "main": "index.html",
+    "license": "MIT",
+    "private": false,
+    "dependencies": {
+        "d3": "^7.8.5",
+        "piechart": "^1.0.0",
+        "width": "^0.0.2"
+    },
+    "scripts": {
+        "start": "parcel 2018-openfoodfacts/**/*  index.html --open",
+        "build": "parcel build index.html"
+    },
+    "devDependencies": {
+        "@types/d3": "^7.4.3",
+        "parcel-bundler": "^1.12.5",
+        "typescript": "^4.7.4"
+    },
+    "keywords": [],
+    "description": ""
+}
