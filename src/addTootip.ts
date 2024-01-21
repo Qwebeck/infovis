@@ -12,9 +12,7 @@ export function addTootip<T>(
                 .duration(opacityTransitionDuration)
                 .style('opacity', 0.5);
 
-            // `${d.data.key}: ${d.data.count}`)
             tooltip.html(text(d))
-
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 28) + "px");
 

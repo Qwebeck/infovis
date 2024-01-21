@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import { width, margin, height, color, rectHeight, colorScheme } from './barchart_params';
 import _ from 'lodash';
 import { addTootip } from './addTootip';
+import { formatName } from './formatName';
 
 
 export const updateHistogram = <T extends { parentKey?: string; key: string; count: number }>(
@@ -33,7 +34,6 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
             .attr("y1", margin.top)
             .attr("y2", height - margin.bottom));
 
-    // d3.scaleOrdinal([true, false], ["steelblue", "#aaa"]);
 
     const root = d3.stratify<T>()
         .id(d => d.key)
@@ -75,7 +75,7 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
     down(svg, root);
 
 
-    function down(svg, d: IndexedNode) {
+    function down(svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>, d: IndexedNode) {
         if (!d.children || d3.active(svg.node())) return;
 
         // Rebind the current node to the background.
@@ -131,7 +131,7 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
             .transition(transition2)
             .attr("width", d => x(d.value) - x(0));
 
-        onZoomIn(d)
+        onZoomIn(d.parent ? d : d.parent)
     }
 
 
@@ -249,14 +249,6 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
     }
 };
 
-
-
-function formatName(name: string): string {
-    return name
-        .split('-') // split the string into words
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-}
 
 
 
