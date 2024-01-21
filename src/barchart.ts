@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { width, margin, height, color, rectHeight, colorScheme } from './barchart_params';
+import { width, margin, height, color, rectHeight, colorScheme, ROOT_KEY } from './barchart_params';
 import _ from 'lodash';
 import { addTootip } from './addTootip';
 import { formatName } from './formatName';
@@ -43,8 +43,7 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
                 ? d.parent.index = d.parent.index + 1 || 0
                 : 0
         })
-        .sum(d => d.count) as IndexedNode;
-
+        .sum(d => d.parentKey == ROOT_KEY ? 0 : d.count) as IndexedNode;
 
 
     const svg = d3.select('#bar_chart')

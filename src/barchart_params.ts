@@ -13,7 +13,9 @@ export const margin = {
 };
 export const width = parseInt(style.getPropertyValue('--chart-width')) - margin.left - margin.right;
 export const height = parseInt(style.getPropertyValue('--chart-height')) - margin.top - margin.bottom;
-export const color = style.getPropertyValue('--chart-color');
+
+export const buttonHighlightedColor = style.getPropertyValue('--button-highlighted')
+export const buttonNormalColor = style.getPropertyValue('--button-normal')
 
 export const rectHeight = parseInt(style.getPropertyValue('--button-height'));
 
@@ -26,6 +28,6 @@ export const opacityTransitionDuration = 100;
 export const colorScheme = d3.schemeCategory10
 //
 export const OTHER_KEY = 'other';
-
+export const ROOT_KEY = 'root';
 
 
