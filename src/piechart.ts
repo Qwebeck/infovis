@@ -1,9 +1,16 @@
 import * as d3 from 'd3';
 import { width, height, margin } from './piechart_sizes';
+import { Collection } from 'lodash';
 
 
-export const updateGlobalSummary = <T extends { key: string; count: number }>(data: T[]) => {
+export const updateGlobalSummary = <T extends { key: string; count: number }>(data_old: Collection<T>) => {
 
+    const data = data_old.take(10).value();
+
+    const otherCount = data_old.drop(10).sumBy("count");
+    if (otherCount > 0) {
+        data.push({ key: 'Other', count: otherCount } as T);
+    }
     const radius: number = Math.min(width, height) / 2 - margin;
 
 
@@ -13,7 +20,6 @@ export const updateGlobalSummary = <T extends { key: string; count: number }>(da
         .attr("height", height)
         .append("g")
         .attr("transform", `translate(${width / 2}, ${height / 2})`);
-
 
 
     // set the color scale

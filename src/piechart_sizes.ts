@@ -1,7 +1,7 @@
 import {
     width as barchartWidth,
     height as barchartHeight,
-} from './barchart_styles';
+} from './barchart_params';
 
 const windoWidth: number = window.innerWidth;
 const windowHeight: number = window.innerHeight;
