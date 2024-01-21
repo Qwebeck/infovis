@@ -1,15 +1,19 @@
 import * as d3 from 'd3';
 import { width, height, margin } from './piechart_sizes';
 import { Collection } from 'lodash';
+import { OTHER_KEY, colorScheme, rectHeight, visibleRecords } from './barchart_params';
+import { addTootip } from './addTootip';
 
 
-export const updateGlobalSummary = <T extends { key: string; count: number }>(data_old: Collection<T>) => {
+export const updateGlobalSummary = <T extends { key: string; count: number }>(data_old: Collection<T>, color: d3.ScaleOrdinal<string, unknown, never>) => {
 
-    const data = data_old.take(10).value();
+    const data = data_old.take(visibleRecords).value();
 
-    const otherCount = data_old.drop(10).sumBy("count");
+
+    const otherCount = data_old.drop(visibleRecords).sumBy("count");
+    console.log(otherCount)
     if (otherCount > 0) {
-        data.push({ key: 'Other', count: otherCount } as T);
+        data.push({ key: OTHER_KEY, count: otherCount } as T);
     }
     const radius: number = Math.min(width, height) / 2 - margin;
 
@@ -21,13 +25,6 @@ export const updateGlobalSummary = <T extends { key: string; count: number }>(da
         .append("g")
         .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-
-    // set the color scale
-    const color = d3.scaleOrdinal()
-        .domain(data.map(d => d.key))
-        .range(d3.schemeTableau10);
-
-
     // Compute the position of each group on the pie:
     const pie = d3.pie<T>().value((d: T) => d.count);
     const data_ready = pie(data);
@@ -36,11 +33,11 @@ export const updateGlobalSummary = <T extends { key: string; count: number }>(da
     // The arc generator
     const arc = d3.arc<d3.PieArcDatum<T>>()
         .innerRadius(radius * 0.5)         // This is the size of the donut hole
-        .outerRadius(radius * 0.8);
+        .outerRadius(radius * 0.5 + rectHeight);
 
     // Another arc that won't be drawn. Just for labels positioning
-    const tooltip = d3.select("#tooltip");
-    svg
+    // const tooltip = d3.select("#tooltip");
+    const piechart = svg
         .selectAll('allSlices')
         .data(data_ready)
         .enter()
@@ -49,33 +46,11 @@ export const updateGlobalSummary = <T extends { key: string; count: number }>(da
         .attr('fill', (d) => color(d.data.key) as string)
         .attr("stroke", "white")
         .style("stroke-width", "2px")
-        .style("opacity", 0.7)
-        .on('mouseover', function (event, d) {
-            d3.select(this).transition()
-                .duration(50)
-                .attr('opacity', '.5')
-                .attr('fill', '#3498db'); // Change fill color on mouseover
+        .style("opacity", 1);
 
-            tooltip.transition()
-                .duration(50)
-                .style("opacity", 1);
-
-            tooltip.html(`${d.data.key}: ${d.data.count}`)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-        })
-        .on('mouseout', function () {
-            d3.select(this).transition()
-                .duration(50)
-                .attr('opacity', '1')
-                .attr('fill', (d: d3.PieArcDatum<T>) => color(d.data.key) as string); // Change fill color back on mouseout
-
-
-            tooltip.transition()
-                .duration(50)
-                .style("opacity", 0);
-        });
-
+    addTootip(piechart, (d) => `${d.data.key}: ${d.data.count}`)
 
 }
+
+
 

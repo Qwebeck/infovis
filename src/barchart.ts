@@ -1,14 +1,19 @@
 import * as d3 from 'd3';
-import { width, margin, height, color } from './barchart_params';
+import { width, margin, height, color, rectHeight, colorScheme } from './barchart_params';
 import _ from 'lodash';
+import { addTootip } from './addTootip';
 
 
-
-export const updateHistogram = <T extends { parentKey?: string; key: string; count: number }>(data: T[]) => {
+export const updateHistogram = <T extends { parentKey?: string; key: string; count: number }>(
+    data: T[],
+    color: d3.ScaleOrdinal<string, unknown, never>,
+    onZoomIn: (d: d3.HierarchyNode<T>) => void,
+    onZoomOut: () => void,
+) => {
 
     type IndexedNode = d3.HierarchyNode<T> & { index: number; };
 
-    const barStep = 27;
+    const barStep = rectHeight;
     const barPadding = 3 / barStep;
     const duration = 750;
 
@@ -28,7 +33,7 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
             .attr("y1", margin.top)
             .attr("y2", height - margin.bottom));
 
-    const color = d3.scaleOrdinal([true, false], ["steelblue", "#aaa"]);
+    // d3.scaleOrdinal([true, false], ["steelblue", "#aaa"]);
 
     const root = d3.stratify<T>()
         .id(d => d.key)
@@ -59,7 +64,7 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
         .attr("width", width)
         .attr("height", height)
         .attr("cursor", "pointer")
-        .on("click", (event, d) => up(svg, d));
+        .on("click", (event, d: IndexedNode) => up(svg, d));
 
     svg.append("g")
         .call(xAxis);
@@ -68,7 +73,6 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
         .call(yAxis);
 
     down(svg, root);
-
 
 
     function down(svg, d: IndexedNode) {
@@ -122,11 +126,12 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
 
         // Color the bars as parents; they will fade to children if appropriate.
         enter.selectAll("rect")
-            .attr("fill", color(true))
+            .attr("fill", (d: d3.HierarchyNode<T>) => color(d.data.key))
             .attr("fill-opacity", 1)
             .transition(transition2)
-            .attr("fill", d => color(!!d.children))
             .attr("width", d => x(d.value) - x(0));
+
+        onZoomIn(d)
     }
 
 
@@ -192,7 +197,7 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
         // Transition exiting rects to the new scale and fade to parent color.
         exit.selectAll("rect").transition(transition1)
             .attr("width", d => x(d.value) - x(0))
-            .attr("fill", color(true));
+            .attr("fill", (d: d3.HierarchyNode<T>) => color(d.data.key));
 
         // Transition exiting text to fade out.
         // Remove exiting nodes.
@@ -216,11 +221,13 @@ export const updateHistogram = <T extends { parentKey?: string; key: string; cou
         // Transition entering rects to the new x-scale.
         // When the entering parent rect is done, make it visible!
         enter.selectAll("rect")
-            .attr("fill", d => color(!!d.children))
+            .attr("fill", (d: d3.HierarchyNode<T>) => color(d.data.key))
             .attr("fill-opacity", p => p === d ? 0 : null)
             .transition(transition2)
             .attr("width", d => x(d.value) - x(0))
             .on("end", function (p) { d3.select(this).attr("fill-opacity", 1); });
+
+        onZoomOut()
     }
 
     function stack(i) {

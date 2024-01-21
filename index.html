@@ -10,16 +10,28 @@
 <body>
   <script src="src/index.ts"></script>
 
+  <div class="container">
+    <div class="left-side">
+      <div id="bar_chart">
 
-  <div id="bar_chart">
+        <h1>Detailed View</h1>
+        <div class="button-container">
+          <span>Main Grouping Category:</span>
+          <button onclick="update('country')">Country</button>
+          <button onclick="update('product_category')">Product category</button>
+        </div>
+      </div>
+    </div>
 
-    <div class="button-container">
-      <button onclick="update('country')">Country</button>
-      <button onclick="update('product_category')">Product category</button>
+    <div class="right-side">
+      <h1>Global Summary</h1>
+      <div id="global_summary"></div>
+      <div id="categories_to_display"></div>
     </div>
   </div>
-  <div id="global_summary"></div>
-  <div id="categories_to_display"></div>
+
+
+
   <div id="tooltip" style="position: absolute; opacity: 0;"></div>
 
 

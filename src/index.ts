@@ -3,7 +3,7 @@ import { updateGlobalSummary } from './piechart'
 import _, { Collection, includes } from 'lodash';
 import { Product, ProductCategory, ProductCountry } from './dataset_interfaces'
 import { updateHistogram } from './barchart';
-import { visibleRecords } from './barchart_params';
+import { OTHER_KEY, colorScheme, visibleRecords } from './barchart_params';
 
 
 (window as any).update = function update(category: 'product_category' | 'country') {
@@ -27,9 +27,6 @@ const loadCountryData = () => {
         d3.tsv('/2018-openfoodfacts_mock/products.tsv')
     ]).then(([countries, products]) => {
         // hack
-
-        const key = 'nutriscore';
-
         const [typedCountries, typedProducts] = [countries as unknown as ProductCountry[], products as unknown as Product[]];
 
 
@@ -47,9 +44,9 @@ const loadCountryData = () => {
             .map(pair => pair[0])
             .value();
 
-        productsWithCountries = productsWithCountries.filter(item => includes(mostPopularCountries, item.country))
+        // productsWithCountries = productsWithCountries.filter(item => includes(mostPopularCountries, item.country))
 
-        updateView(productsWithCountries, mostPopularCountries);
+        updateView(productsWithCountries, 'country', mostPopularCountries);
     })
 }
 
@@ -62,37 +59,69 @@ const loadProductCategoryData = () => {
     ]).then(([categories, products]) => {
         // hack
         const [typedCategories, typedProducts] = [categories as unknown as ProductCategory[], products as unknown as Product[]];
-        const result = _(typedProducts)
+
+
+        let productsWithCategories = _(typedProducts)
             .keyBy('code')
             .merge(_.keyBy(typedCategories, 'code'))
             .filter(item => !!item.category)
+
+
+        const mostPopularCategories = productsWithCategories
             .countBy('category')
             .toPairs()
             .orderBy(pair => pair[1], 'desc')
-            .map(([country, count], i) => ({ 'key': country, 'parentKey': `${country}_${i}`, 'count': count }));
-        ;
+            .take(visibleRecords)
+            .map(pair => pair[0])
+            .value();
 
-        // updateView(result)
+        // productsWithCategories = productsWithCategories.filter(item => includes(mostPopularCategories, item.category))
+
+
+        updateView(productsWithCategories, 'category', mostPopularCategories)
     })
 }
 
 
 
-const updateView = (data: Collection<Product & ProductCountry>, mostPopularCountries: string[]) => {
+const updateView = <T extends Product>(data: Collection<T>, keyName: string, mostPopularKeys: string[]) => {
+
+
+    const color = d3.scaleOrdinal()
+        .domain([...mostPopularKeys, OTHER_KEY])
+        .range(colorScheme);
 
     const dataPreparedForHistogram = data
-        .countBy((d) => `${d.country},${d.nutriscore}`)
+        .filter(item => includes(mostPopularKeys, item[keyName]))
+        .countBy((d) => `${d[keyName]},${d.nutriscore}`)
         .toPairs()
         .map(([key, value]) => ({ key: key.split(',')[1], parentKey: key.split(',')[0], count: value }))
         .filter(item => !!item.parentKey)
         .value();
-    mostPopularCountries.forEach(country => {
-        dataPreparedForHistogram.push({ key: country, parentKey: 'world', count: data.filter(item => item.country === country).size() })
+
+    mostPopularKeys.forEach(popularKey => {
+        dataPreparedForHistogram.push({ key: popularKey, parentKey: 'root', count: data.filter(item => item[keyName] === popularKey).size() })
     })
-    dataPreparedForHistogram.push({ key: 'world', parentKey: undefined, count: data.size() })
-    console.log(dataPreparedForHistogram)
-    updateHistogram(dataPreparedForHistogram);
-    updateGlobalSummary(data.countBy('country').toPairs().map(item => ({ 'key': item[0], 'count': item[1] })));
+
+    dataPreparedForHistogram.push({ key: 'root', parentKey: undefined, count: data.size() })
+
+    updateHistogram(dataPreparedForHistogram,
+        color,
+        (d) => {
+            const nodeData = [{ key: d.data.key, parentKey: d.data.parentKey, count: d.data.count }]
+            d.each((node) => {
+                nodeData.push({ key: node.data.key, parentKey: node.data.parentKey, count: node.data.count })
+            });
+            // updateGlobalSummary(_(nodeData))
+        }
+        , () => { });
+
+    updateGlobalSummary(
+        data
+            .countBy(keyName)
+            .toPairs()
+            .map(item => ({ 'key': item[0], 'count': item[1] }))
+        , color);
 }
 
 
